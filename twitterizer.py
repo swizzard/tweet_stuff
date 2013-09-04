@@ -27,6 +27,9 @@ class Twitterizer(object):
             See http://mike.verdone.ca/twitter/ for more information.
             2) They return a boolean
             3) They include variable keyword parameters (**kwargs)
+            NB: tests to be used with Scrape should probably be wrapped in try/except
+            in case a tweet lacks a certain key (most commonly 'text' in case of deletions,
+            etc.)
         :param _auth: Twitter OAuth authorization. See documentation under tools.auth for
         more information.
         :type _auth: function
@@ -45,9 +48,12 @@ class Twitterizer(object):
         :param tweet: the tweet to filter
         :type tweet: dictionary
         """
-        if filter_.unifilter(tweet['text']):
-            return True
-        else:
+        try:
+            if filter_.unifilter(tweet['text']):
+                return True
+            else:
+                return False
+        except KeyError:
             return False
 
     def _censor_test(self, tweet, **kwargs):
@@ -56,11 +62,12 @@ class Twitterizer(object):
         :param tweet: the tweet to check
         :type tweet: dictionary
         """
-        if not censor:
-            return True
-        elif filter_.curse_out(tweet['text']):
-            return True
-        else:
+        try:
+            if filter_.curse_out(tweet['text']):
+                return True
+            else:
+                return False
+        except KeyError:
             return False
 
     def _hash_test(self, tweet, **kwargs):
@@ -73,11 +80,12 @@ class Twitterizer(object):
         :return: boolean
 
         """
-        if not hash_only:
-            return True
-        elif tweet['entities']['hashtags']:
-            return True
-        else:
+        try:
+            if tweet['entities']['hashtags']:
+                return True
+            else:
+                return False
+        except KeyError:
             return False
 
     def _text_test(self,tweet, **kwargs):
@@ -109,10 +117,10 @@ class Twitterizer(object):
 
         """
         if suite:
-            tests += [self._censor_test, self._filter_test, self._hash_test, self._text_test]
+            tests += (self._censor_test, self._filter_test, self._hash_test, self._text_test,)
         output = []
         for tweet in tweets:
-            if all([test(tweet,**kwargs) for test in tests]):
+            if all([test(tweet,**test_kwargs) for test in tests]):
                 text = tweet['text']
                 metadata = {}
                 for k in tweet.keys():
@@ -216,7 +224,7 @@ class Search(Twitterizer):
         search_meta = results['search_metadata']
         if ignore_unames:
             kwargs["q"] = q
-            tests += self._unames_test
+            tests += (self._unames_test,)
         return self.filter_tweets(tweets, suite, *tests, **kwargs)
 
     def save_results(self, output, label):
@@ -335,16 +343,16 @@ class Scrape(Twitterizer):
         :param sample: a twitter.stream.statuses.sample object.
         :type sample: twitter.stream.statuses.sample object.
         """
+        super(Scrape, self).__init__(_auth=None)
         self.stream = stream or self.get_stream()
         self.sample = sample or self.get_sample(self.stream)
-        super(Scrape, self).__init__(_auth=None)
 
     def get_stream(self):
         """
         Get a new TwitterStream stream.
         :return: twitter.TwitterStream object.
         """
-        return self.t.TwitterStream(auth=self.__auth__)
+        return twitter.TwitterStream(auth=self.__auth__)
 
     def get_sample(self, stream):
         """
@@ -355,7 +363,7 @@ class Scrape(Twitterizer):
         """
         return stream.statuses.sample()
 
-    def get_tweets(self, sample=None, limit=20, suite=True, as_gen=True, *tests, **kwargs):
+    def get_tweets(self, sample=None, limit=20, suite=True, as_gen=True, verbose=True, *tests, **kwargs):
         """
         Retrieve tweets from a sample.
         :param sample: a pre-existing twitter.stream.statuses.sample object
@@ -367,6 +375,8 @@ class Scrape(Twitterizer):
         :param as_gen: whether to return a list of unparsed tweets (False) or a
         Twitterizer.generator created therefrom
         :type as_gen: boolean
+        :param verbose: whether to print the number of tweets returned
+        :type verbose: boolean
         :return: list of unparsed tweets, or .generator
         """
         sample = sample or self.sample

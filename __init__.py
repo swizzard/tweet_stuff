@@ -10,9 +10,15 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'samrakerdotcom.settings'
 import re
 import json
 import twitter
-from hash_to_hash.models import Tweet, Hashtag, Competitors
-from django.db import IntegrityError
-from django.db import DatabaseError
+try:
+    from hash_to_hash.models import Tweet, Hashtag, Competitors
+    from django.db import IntegrityError
+    from django.db import DatabaseError
+except ImportError as e:
+    errs = e.args
+    for err in errs:
+        print err
+    print "Database-related tools will be unavailable..."
 from tools import auth
 from parsed_tweet import ParsedTweet
 
