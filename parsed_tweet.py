@@ -44,17 +44,25 @@ class ParsedTweet(object):
                 self.urls = None
         self.hashtags = self.hashtags or re.findall(r'#[\w_\d]+', text)
         self.uid = self.get_meta('user')['id']
-        self.unshortened_urls = self.unshortened_urls()
+        self.unshortened_urls = self.get_unshortened_urls()
+        self.url_domains = self.get_url_domains()
 
-    def unshortened_urls(self):
-        unshortened = {}
+    def get_unshortened_urls(self):
+        unshortened = []
         for url in self.urls:
             try:
                 r = requests.get(url)
-                unshortened[url] = r.url
+                unshortened.append(r.url)
             except requests.exceptions.RequestException as e:
                 print e.args[0]
-                unshortened[url] = url
+                unshortened.append(url)
+
+    def get_url_domains(self):
+        domains = []
+        p = re.compile(r'http://([\w\d\.\-]+\.\w{2,3})')
+        for url in self.unshortened_urls:
+            domains.append(p.match(url).group(1))
+        return domains
 
 
     def __get_meta_key__(self, metadata):
