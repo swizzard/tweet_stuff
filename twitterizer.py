@@ -1,6 +1,11 @@
 import twitter
 from parsed_tweet import ParsedTweet
 from tools import auth
+if auth._AUTH:
+    print """Success!
+Your Twitter OAuth credentials have been successfully retrieved.
+You can now set {0}.auth._auth=auth._AUTH for any classes that require OAuth credentials.
+			""".format("twitterizer")
 from tools import filter as filter_
 import re
 
@@ -97,6 +102,19 @@ class Twitterizer(object):
         if 'text' in tweet.keys():
             return True
         else:
+            return False
+    def _url_test(self, tweet, **kwargs):
+        """
+        Checks whether there are urls in the tweet
+        :param tweet: the tweet to check
+        :type tweet: dictionary
+        """
+        try:
+            if tweet['entities']['urls']:
+                return True
+            else:
+                return False
+        except KeyError:
             return False
 
     def filter_tweets(self, tweets, suite=True, *tests, **test_kwargs):

@@ -1,6 +1,9 @@
 import twitter
 import os
+from urllib2 import URLError
 _AUTH = None
+
+
 def set_AUTH(token, token_secret, consumer_key, consumer_secret):
 	"""
 	:param token: your token
@@ -21,13 +24,11 @@ def set_AUTH(token, token_secret, consumer_key, consumer_secret):
 		del test
 		global _AUTH
 		_AUTH = _auth
-		print """Success!
-Your Twitter OAuth credentials have been successfully retrieved.
-You can now set _auth=auth._AUTH for any classes that require OAuth credentials.
-			"""
 	except twitter.api.TwitterHTTPError as e:
 		errors = json.loads(e.response_data)
 		print errors["errors"][0]["message"]
+	except URLError as e:
+	    print e.args[0]
 
 def auth_from_env():
     TOKEN = os.environ.get("TWITTER_TOKEN", -1)
