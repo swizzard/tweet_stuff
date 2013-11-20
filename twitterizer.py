@@ -4,7 +4,7 @@ from tools import auth
 if auth._AUTH:
     print """Success!
 Your Twitter OAuth credentials have been successfully retrieved.
-You can now set {0}.auth._auth=auth._AUTH for any classes that require OAuth credentials.
+You can now set _auth={0}.auth._AUTH for any classes that require OAuth credentials.
 			""".format("twitterizer")
 from tools import filter as filter_
 import re
@@ -117,35 +117,29 @@ class Twitterizer(object):
         except KeyError:
             return False
 
-    def filter_tweets(self, tweets, suite=True, *tests, **test_kwargs):
+    def filter_tweet(self, tweet, suite=True, tests=None, **test_kwargs):
         """
-        Filters tweets using the underscored helper methods above and separates the tweets into (text,metadata) tuples
-        :param tweets: the tweets to filter
-        :type tweets: list of dictionaries
-        :param hash_only: whether to filter out tweets that don't contain hashtags
-        :type hash_only: boolean
-        :param lang: language to filter for. See documentation under ._lang_test for more information
-        :type lang: string
-        :param lang_none: whether to filter out tweets without a language code
-        :type lang_none: boolean
-        :param filter: whether to filter out tweets containing non-English characters using tools.filter.unifilter (q.v.)
-        :type filter: boolean
-        :param censor: whether to filter out tweets containing bad language, as defined under tools.filter.censor (q.v.)
-        :type censor: boolean
-
+        Filters a tweet using the underscored helper methods above and separates the tweet into (text,metadata) tuples
+        :param tweet: the tweet to filter
+        :type tweet: dict
+        :param suite: whether to include the standard test suite (_censor_test, _filter_test, _hash_test, _text_test)
+        :type suite: bool
+        :param tests: any additional tests to use
+        :type tests: list of test functions (see note on test functions above) or None
+        :param test_kwargs: keyword arguments to pass to the tests
         """
+        tests = tests or []
         if suite:
             tests += (self._censor_test, self._filter_test, self._hash_test, self._text_test,)
         output = []
-        for tweet in tweets:
-            if all([test(tweet,**test_kwargs) for test in tests]):
-                text = tweet['text']
-                metadata = {}
-                for k in tweet.keys():
-                    if k != 'text':
-                        metadata[k] = tweet[k]
-                output.append((text, metadata))
-        return output
+        if all([test(tweet,**test_kwargs) for test in tests]):
+            text = tweet['text']
+            metadata = {}
+            for k in tweet.keys():
+                if k != 'text':
+                    metadata[k] = tweet[k]
+            return (text, metadata)
+        return None
 
     def generator(self, tweets):
         """
@@ -220,7 +214,7 @@ class Search(Twitterizer):
             l.append(self.tweets[k])
         return l
 
-    def search(self, q, suite=True, ignore_unames=True, *tests, **kwargs):
+    def search(self, q, suite=True, ignore_unames=True, tests=None, **kwargs):
         """
         Retrieves tweets via the Twitter Search API and returns any that pass the filter
         tests (see documentation under Twitterizer.filter_tweets, above). This method
@@ -242,8 +236,8 @@ class Search(Twitterizer):
         search_meta = results['search_metadata']
         if ignore_unames:
             kwargs["q"] = q
-            tests += (self._unames_test,)
-        return self.filter_tweets(tweets, suite, *tests, **kwargs)
+            tests += self._unames_test
+        return [self.filter_tweet(tweet, suite, tests, **kwargs) for tweet in results]
 
     def save_results(self, output, label):
         """
@@ -288,7 +282,7 @@ class Search(Twitterizer):
         """
         return [k for k in self.tweets.keys()]
 
-    def research(self, q, suite=True, ignore_unames=True, minim=20, **kwargs):
+    def research(self, q, suite=True, tests=None, ignore_unames=True, minim=20, **kwargs):
         """
         Calls .search until a certain number of tweets have been returned
         :param q: the search query
@@ -301,9 +295,10 @@ class Search(Twitterizer):
         :return: list of (str,dict) tuples, where the string is the tweet's text, and the
         dictionary is the tweet's metadata
         """
-        tweets = self.search(q, **kwargs)
+        tests = tests or []
+        tweets = self.search(q, suite, tests, ignore_unames, **kwargs)
         while len(tweets) < minim:
-            tweets += self.search(q, **kwargs)
+            tweets = self.search(q, suite, tests, ignore_unames, **kwargs)
         return tweets
 
     def merge_labels(self, new_label=None, keep_old=False,*labels):
@@ -381,7 +376,7 @@ class Scrape(Twitterizer):
         """
         return stream.statuses.sample()
 
-    def get_tweets(self, sample=None, limit=20, suite=True, as_gen=True, verbose=True, *tests, **kwargs):
+    def get_tweets(self, sample=None, limit=20, suite=True, as_gen=True, verbose=True, tests=None, **kwargs):
         """
         Retrieve tweets from a sample.
         :param sample: a pre-existing twitter.stream.statuses.sample object
@@ -398,12 +393,15 @@ class Scrape(Twitterizer):
         :return: list of unparsed tweets, or .generator
         """
         sample = sample or self.sample
+        tests = tests or []
         i = 0
         tweets = []
         while i < limit:
             try:
-                tweets.append(sample.next())
-                i += 1
+                tw = self.filter_tweet(sample.next(), suite, tests, **kwargs)
+                if tw:
+                    tweets.append(tw)
+                    i += 1
             except StopIteration:
                 if i > 0:
                     more = "more "
@@ -413,11 +411,10 @@ class Scrape(Twitterizer):
                 break
         if verbose:
             print "{} tweets returned".format(i)
-        filtered = self.filter_tweets(tweets, suite, *tests, **kwargs)
         if as_gen:
-            return self.get_scrape_generator(filtered)
+            return self.get_scrape_generator(tweets)
         else:
-            return filtered
+            return tweets
 
     def get_scrape_generator(self,tweets):
         """

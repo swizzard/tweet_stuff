@@ -39,7 +39,7 @@ class ParsedTweet(object):
             except KeyError:
                 self.hashtags = None
             try:
-                self.urls = metadata['entities']['urls']
+                self.urls = [u['url'] for u in metadata['entities']['urls']]
             except KeyError:
                 self.urls = None
         self.hashtags = self.hashtags or re.findall(r'#[\w_\d]+', text)
@@ -56,10 +56,11 @@ class ParsedTweet(object):
             except requests.exceptions.RequestException as e:
                 print e.args[0]
                 unshortened.append(url)
+        return unshortened
 
     def get_url_domains(self):
         domains = []
-        p = re.compile(r'http://([\w\d\.\-]+\.\w{2,3})')
+        p = re.compile(r'https?://([\w\d\.\-]+\.\w{2,3})')
         for url in self.unshortened_urls:
             domains.append(p.match(url).group(1))
         return domains
