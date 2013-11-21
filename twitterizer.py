@@ -128,17 +128,18 @@ class Twitterizer(object):
         :type tests: list of test functions (see note on test functions above) or None
         :param test_kwargs: keyword arguments to pass to the tests
         """
-        tests = tests or []
-        if suite:
-            tests += (self._censor_test, self._filter_test, self._hash_test, self._text_test,)
-        output = []
-        if all([test(tweet,**test_kwargs) for test in tests]):
-            text = tweet['text']
-            metadata = {}
-            for k in tweet.keys():
-                if k != 'text':
-                    metadata[k] = tweet[k]
-            return (text, metadata)
+        if tweet:
+            tests = tests or []
+            if suite:
+                tests += (self._censor_test, self._filter_test, self._hash_test, self._text_test,)
+            output = []
+            if all([test(tweet,**test_kwargs) for test in tests]):
+                text = tweet['text']
+                metadata = {}
+                for k in tweet.keys():
+                    if k != 'text':
+                        metadata[k] = tweet[k]
+                return (text, metadata)
         return None
 
     def generator(self, tweets):
@@ -357,8 +358,16 @@ class Scrape(Twitterizer):
         :type sample: twitter.stream.statuses.sample object.
         """
         super(Scrape, self).__init__(_auth=None)
-        self.stream = stream or self.get_stream()
-        self.sample = sample or self.get_sample(self.stream)
+        self._stream = stream or self.get_stream()
+        self._sample = sample or self.get_sample(self.stream)
+
+    @property
+    def sample(self):
+        return self.get_sample(self.stream)
+
+    @property
+    def stream(self):
+        return self.get_stream()
 
     def get_stream(self):
         """
@@ -402,7 +411,7 @@ class Scrape(Twitterizer):
         tweets = []
         while i < limit:
             try:
-                tw = self.filter_tweet(sample.next(), suite, tests, **kwargs)
+                tw = self.filter_tweet(next(sample,None), suite, tests, **kwargs)
                 if tw:
                     tweets.append(tw)
                     i += 1
