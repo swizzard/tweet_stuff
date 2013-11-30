@@ -46,6 +46,43 @@ class Twitterizer(object):
         self.tweets = {}
         self.saved_search_meta = {}
         self.t = twitter.Twitter(auth=self.__auth__)
+        self.to_censor = ["nigga","nigger","shit","damn","fuck","cock","twat","slut","pussy"]
+
+    def unifilter(self, s):
+        try:
+            stri = s.decode('utf-8')
+        except (UnicodeEncodeError, UnicodeDecodeError) as e:
+            stri = e.args[1]
+        return all([self.unicheck(c) for c in stri])
+
+    def unicheck(self, c):
+        val = ord(c)
+        if val <= 128:
+            return True
+        elif val >= 8192 and val <= 8303:
+            return True
+        elif val >= 8352 and val <= 8399:
+            return True
+        elif val >= 8448 and val <= 9215:
+            return True
+        elif val >=  9312 and val >= 11263:
+            return True
+        elif val >= 126876 and val <= 127321:
+            return True
+        elif val >= 127744 and val <= 128591:
+            return True
+        elif val >= 128640 and val <= 128895:
+            return True
+        elif val == 65533:
+            return True
+        else:
+            return False
+
+    def curse_out(self, s):
+        for x in self.to_censor:
+            if x in s.lower():
+                return False  # fails the test
+        return True
 
     def _filter_test(self, tweet, **kwargs):
         """
@@ -54,7 +91,7 @@ class Twitterizer(object):
         :type tweet: dictionary
         """
         try:
-            if filter_.unifilter(tweet['text']):
+            if self.unifilter(tweet['text']):
                 return True
             else:
                 return False
@@ -68,10 +105,10 @@ class Twitterizer(object):
         :type tweet: dictionary
         """
         try:
-            if filter_.curse_out(tweet['text']):
-                return True
-            else:
+            if self.curse_out(tweet['text']):
                 return False
+            else:
+                return True
         except KeyError:
             return False
 
@@ -103,6 +140,7 @@ class Twitterizer(object):
             return True
         else:
             return False
+
     def _url_test(self, tweet, **kwargs):
         """
         Checks whether there are urls in the tweet
