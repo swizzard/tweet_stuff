@@ -1,0 +1,26 @@
+See http://nltk.org/nltk_data/ for more information
+
+Australian Broadcasting Commission 2006
+Brown
+Carnegie Mellon Pronouncing Dictionary (0.6)
+CONLL 2000 Chunking Corpus
+Gazeteer Lists*
+Genesis Corpus**
+Project Gutenberg Selections
+C-Span Inaugural Address Corpus
+Sentiment Polarity Dataset Version 2.0
+Names Corpus, Version 1.3
+NPS Chat
+The Reuters-21578 benchmark corpus, ApteMod version
+Shakespeare XML Corpus Sample
+Switchboard Corpus Sample
+Web Text Corpus
+
+
+* multiword entries split
+** King James and World English Bible versions only
+
+
+
+'words.txt' is a list of words extracted from the above corpora, with punctuation removed
+'lowered_words.txt' contains the same words as 'words.txt', except all words have been lowercased.
