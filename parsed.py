@@ -233,7 +233,7 @@ class ParsedUser(Parsed):
         self.utc_tz = self.get_utc_tz()
         self.verified = self.get_meta("verified")
 
-    def self.get_utc_offset():
+    def get_utc_offset(self):
         """
         If the User supplies utc_offset, return it. Otherwise, try and guess the offset
         from the created_at attribute.
@@ -247,7 +247,7 @@ class ParsedUser(Parsed):
                 offset = int(m.group(1))
         return offset
 
-    def self.get_utc_tz():
+    def get_utc_tz(self):
         if self.utc_offset:
             return self.utc_offset / 3600
         else:
