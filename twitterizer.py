@@ -1,6 +1,6 @@
 import twitter
 from parsed import ParsedTweet
-from tools import auth
+import auth
 if auth._AUTH:
     print """Success!
 Your Twitter OAuth credentials have been successfully retrieved.
