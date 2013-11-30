@@ -1,5 +1,5 @@
 import twitter
-from parsed_tweet import ParsedTweet
+from parsed import ParsedTweet
 from tools import auth
 if auth._AUTH:
     print """Success!
