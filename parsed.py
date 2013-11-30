@@ -130,7 +130,7 @@ class ParsedTweet(Parsed):
         The default is a simple whitespace-based tokenizer (see .__split__, below.)
         :type tokenize: function
         """
-        super(ParsedTweet, self).__init__(js, tokenize)
+        super(ParsedTweet, self).__init__(js)
         self.tokenize = tokenize or self.__split__
         if text:
             self.text = text
