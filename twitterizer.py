@@ -6,7 +6,6 @@ if auth._AUTH:
 Your Twitter OAuth credentials have been successfully retrieved.
 You can now set _auth={0}.auth._AUTH for any classes that require OAuth credentials.
 			""".format("twitterizer")
-from tools import filter as filter_
 import re
 
 
