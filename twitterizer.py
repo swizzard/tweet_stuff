@@ -171,12 +171,7 @@ class Twitterizer(object):
                 tests += (self._censor_test, self._filter_test, self._hash_test, self._text_test,)
             output = []
             if all([test(tweet,**test_kwargs) for test in tests]):
-                text = tweet['text']
-                metadata = {}
-                for k in tweet.keys():
-                    if k != 'text':
-                        metadata[k] = tweet[k]
-                return (text, metadata)
+                return tweet
         return None
 
     def generator(self, tweets):
@@ -189,7 +184,7 @@ class Twitterizer(object):
         i = 0
         while True:
             try:
-                yield ParsedTweet(tweets[i][0], tweets[i][1])
+                yield ParsedTweet(tweets[i])
                 i += 1
             except IndexError:
                 raise StopIteration

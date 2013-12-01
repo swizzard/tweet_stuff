@@ -13,15 +13,18 @@ class Parsed(object):
         self.metadata = self.__get_meta_key__(js)
         self.meta_keys = self.metadata.keys()
         self.entities = self.get_meta("entities")
-        try:
-            self.urls = [u['url'] for u in self.entities['urls']]
-        except KeyError:
-            self.urls = None
+        if self.entities:
+            try:
+                self.urls = [u.get('url') for u in self.entities['urls']]
+            except TypeError:
+                self.urls = []
+        else:
+            self.urls = []
         self.unshortened_urls = self.get_unshortened_urls()
         self.url_domains = self.get_url_domains()
         self.id = self.get_meta("id_str")
 
-    def __get_meta_key__(self, metadata):
+    def __get_meta_key__(self, js):
         """
         The metadata dictionary returned by the Twitter API is heavily nested. This function
         flattens that dictionary and makes it easier to retrieve various parts of the metadata
@@ -31,10 +34,10 @@ class Parsed(object):
         :return: dictionary.
         """
         d = {}
-        for k in metadata.keys():
-            d[k] = metadata[k]
-            if isinstance(metadata[k], dict):
-                d.update(self.__get_meta_key__(metadata[k]))
+        for k in js.keys():
+            d[k] = js[k]
+            if isinstance(js[k], dict):
+                d.update(self.__get_meta_key__(js[k]))
         return d
 
     def get_meta(self, value=None, verbose=False):
@@ -47,10 +50,10 @@ class Parsed(object):
         :type verbose: boolean.
         :return: string, list, or dictionary, depending on the metadata in question.
         """
-        if self.get('meta_key', None):
+        if self.get('meta_keys', None):
             if value:
                 try:
-                    return self.meta_key[value]
+                    return self.metadata[value]
                 except KeyError:
                     if verbose:
                         print "No value found for {}".format(value)
@@ -111,7 +114,7 @@ class Parsed(object):
 
 
 class ParsedTweet(Parsed):
-    def __init__(self, text=None, js=None, tokenize=None):
+    def __init__(self, js, tokenize=None):
         """
         A class that turns some salient parts of the twitter metadata into attributes,
         and also tokenizes and munges the text of the tweet.
@@ -132,18 +135,14 @@ class ParsedTweet(Parsed):
         """
         super(ParsedTweet, self).__init__(js)
         self.tokenize = tokenize or self.__split__
-        if text:
-            self.text = text
-        else:
-            self.text = self.metadata.get('text', '')
+        self.text = self.metadata.get('text', '')
         self.text = self.text.encode('utf8', 'replace').decode('ascii', 'replace')
-        self.tokenized_text = self.tokenize(text)
+        self.tokenized_text = self.tokenize(self.text)
         self.munge_p = re.compile(r'(@|http://(www\.)?)[\w\d\.\-\?/]+')
         self.munged_text = re.sub(self.munge_p, '\g<1>xxxxxxxx', self.text)
-        self.metadata = metadata
         self.hashtags = None
         try:
-            hts = metadata['entities']['hashtags']
+            hts = self.metadata['entities']['hashtags']
             if hts:
                 self.hashtags = [ht['text'] for ht in hts]
         except KeyError:
@@ -151,7 +150,7 @@ class ParsedTweet(Parsed):
         self.hashtags = self.hashtags or re.findall(r'#[\w_\d]+', text)
         self.user = ParsedUser(self.get_meta("user"))
         self.created_at = self.get_meta("created_at")
-        self.mentions = self.get_meta("emtities")["user_mentions"]
+        self.mentions = self.get_meta("entities")["user_mentions"]
 
     def __split__(self, s):
         """
