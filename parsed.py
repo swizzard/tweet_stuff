@@ -1,6 +1,7 @@
 import json
 import re
 import requests
+from urllib2 import URLError
 
 
 class Parsed(object):
@@ -86,7 +87,7 @@ class Parsed(object):
             try:
                 r = requests.get(url)
                 unshortened.append(r.url)
-            except requests.exceptions.RequestException as e:
+            except (requests.exceptions.RequestException, URLError) as e:
                 print e.args[0]
                 unshortened.append(url)
         return unshortened
