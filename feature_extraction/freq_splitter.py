@@ -1,7 +1,8 @@
 import json
-with open("../resources/freqs.json") as f:
+import os
+with open(os.path.abspath("freqs.json")) as f:
     word_freqs = json.load(f.read())
-with open("../resources/lowered_freqs.json") as f:
+with open(os.path.abspath("lowered_freqs.json")) as f:
     lowered_freqs = json.load(f.read())
 
 def split_text(text, word_frequencies, cache):
