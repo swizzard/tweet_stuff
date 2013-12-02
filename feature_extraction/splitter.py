@@ -1,6 +1,7 @@
-with open("../resources/words.txt") as f:
+import os
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"words.txt")) as f:
     words = [w.rstrip() for w in f.readlines()]
-with open("../resources/lowered_words.txt") as f:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__))),"lowered_words.json") as f:
     lowered_words = [w.rstrip() for w in f.readlines()]
 
 def split_string(s, resource=words):
