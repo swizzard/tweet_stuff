@@ -14,13 +14,17 @@ class Parsed(object):
         self.metadata = self.__get_meta_keys__(js)
         self.meta_keys = self.metadata.keys()
         self.entities = self.get_meta("entities")
-        if self.entities:
-            try:
-                self.urls = [u.get('url') for u in self.entities['urls']]
-            except TypeError:
-                self.urls = []
-        else:
-            self.urls = []
+        self.urls = []
+        urls = self.get_meta('urls')
+        if urls:
+                for url in urls:
+                    expanded = url.get('expanded_url')
+                    if expanded:
+                        self.urls.append(expanded)
+                    else:
+                        tco = url.get('url')
+                        if tco:
+                            self.urls.append(tco)
         self.unshortened_urls = self.get_unshortened_urls()
         self.url_domains = self.get_url_domains()
         self.id = self.get_meta("id_str")
