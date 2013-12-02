@@ -415,7 +415,7 @@ class Scrape(Twitterizer):
         """
         return stream.statuses.sample()
 
-    def get_tweets(self, sample=None, limit=20, suite=True, tests=None, as_gen=True, verbose=True,  percolate=False, **kwargs):
+    def get_tweets(self, sample=None, limit=20, suite=True, tests=None, as_gen=True, verbose=True, **kwargs):
         """
         Retrieve tweets from a sample.
         :param sample: a pre-existing twitter.stream.statuses.sample object
@@ -431,8 +431,6 @@ class Scrape(Twitterizer):
         :type as_gen: boolean
         :param verbose: whether to print the number of tweets returned
         :type verbose: boolean
-        :param percolate: if True, re-raises StopIteration error caused by exhaustion of the sample
-        :type percolate: boolean
         :return: list of unparsed tweets, or .generator
         """
         sample = sample or self.sample
@@ -446,51 +444,15 @@ class Scrape(Twitterizer):
                     tweets.append(tw)
                     i += 1
             except StopIteration:
-                if i > 0:
-                    more = "more "
-                else:
-                    more = ""
-                print "sample seems not to have any {}tweets".format(more)
-                if percolate:
-                    raise StopIteration
-                break
+                print "Sample seems to be out of tweets...refreshing..."
+                self.update_sample()
+                continue
         if verbose:
             print "{} tweets returned".format(i)
         if as_gen:
             return self.get_scrape_generator(tweets)
         else:
             return tweets
-
-    def rescrape(self, sample=None, limit=1000, suite=True, tests=None, as_gen=True, verbose=True, **kwargs):
-        """
-        Calls get_tweets multiple times, while also refreshing the sample as needed.
-        :param sample: a pre-existing twitter.stream.statuses.sample object
-        :type sample: twitter.stream.statuses.sample object
-        :param limit: the maximum number of tweets to return
-        :type limit: int
-        :param suite: See documentation above
-        :type suite: boolean
-        :param tests: additional tests to pass to filter_tweet
-        :type tests: list of test functions (see documentation for Twitterizer)
-        :param as_gen: whether to return a list of unparsed tweets (False) or a
-        Twitterizer.generator created therefrom
-        :type as_gen: boolean
-        :param verbose: whether to print the number of twets returned
-        :type verbose: boolean
-        """
-        i = 0
-        tw = []
-        while i <= limit:
-            try:
-                tw += self.get_tweets(sample,suite,tests,as_gen=False, percolate=True, **kwargs)
-            except StopIteration:
-                _sample=self.get_sample(self.get_stream())
-                tw += self.get_tweets(_sample, suite, tests, as_gen=False, percolate=True)
-        else:
-            if as_gen:
-                return self.get_scrape_generator(tw)
-            else:
-                return tw
 
     def get_scrape_generator(self,tweets):
         """
