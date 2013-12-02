@@ -11,7 +11,7 @@ class Parsed(object):
         :param js: JSON dict as returned by Twitter API
         :type js: JSON
         """
-        self.metadata = self.__get_meta_key__(js)
+        self.metadata = self.__get_meta_keys__(js)
         self.meta_keys = self.metadata.keys()
         self.entities = self.get_meta("entities")
         if self.entities:
@@ -25,7 +25,7 @@ class Parsed(object):
         self.url_domains = self.get_url_domains()
         self.id = self.get_meta("id_str")
 
-    def __get_meta_key__(self, js):
+    def __get_meta_keys__(self, js):
         """
         The metadata dictionary returned by the Twitter API is heavily nested. This function
         flattens that dictionary and makes it easier to retrieve various parts of the metadata
@@ -38,7 +38,7 @@ class Parsed(object):
         for k in js.keys():
             d[k] = js[k]
             if isinstance(js[k], dict):
-                d.update(self.__get_meta_key__(js[k]))
+                d.update(self.__get_meta_keys__(js[k]))
         return d
 
     def get_meta(self, value=None, verbose=False):
@@ -60,7 +60,7 @@ class Parsed(object):
                         print "No value found for {}".format(value)
                     return None
             else:
-                return self.meta_key
+                return self.meta_keys
         else:
             return None
 
@@ -76,8 +76,8 @@ class Parsed(object):
             return self.__getattribute__(value)
         else:
             if hasattr(self, 'meta_key'):
-                if hasattr(self.meta_key, 'get'):
-                    return self.meta_key.get(value, default)
+                if hasattr(self.meta_keys, 'get'):
+                    return self.meta_keys.get(value, default)
             else:
                 return default
 
@@ -151,7 +151,14 @@ class ParsedTweet(Parsed):
         self.hashtags = self.hashtags or re.findall(r'#[\w_\d]+', text)
         self.user = ParsedUser(self.get_meta("user"))
         self.created_at = self.get_meta("created_at")
-        self.mentions = self.get_meta("entities")["user_mentions"]
+        self.mentions = self.get_mentions()
+
+    def get_mentions(self):
+        mentions = self.get_meta("entities")["user_mentions"]
+        mention_ids = []
+        for mention in mentions:
+            mention_ids.append(mention["id_str"])
+        return mention_ids
 
     def __split__(self, s):
         """
@@ -252,7 +259,6 @@ class ParsedUser(Parsed):
             return self.utc_offset / 3600
         else:
             return None
-
 
 def tweets_from_json(fname):
     with open(fname) as f:
