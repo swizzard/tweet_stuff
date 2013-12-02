@@ -390,16 +390,14 @@ class Scrape(Twitterizer):
         :type sample: twitter.stream.statuses.sample object.
         """
         super(Scrape, self).__init__(_auth=None)
-        self._stream = stream or self.get_stream()
-        self._sample = sample or self.get_sample(self.stream)
+        self.stream = stream or self.get_stream()
+        self.sample = sample or self.get_sample(self.stream)
 
-    @property
-    def sample(self):
-        return self.get_sample(self.stream)
+    def update_stream(self):
+        self.stream = self.get_stream()
 
-    @property
-    def stream(self):
-        return self.get_stream()
+    def update_sample(self):
+        self.sample = self.get_sample(self.stream)
 
     def get_stream(self):
         """
