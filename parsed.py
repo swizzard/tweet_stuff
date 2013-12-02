@@ -111,7 +111,7 @@ class Parsed(object):
         """
         if verbose:
             print "serializing {}".format(self.__repr__())
-        return json.dumps(self.get_meta())
+        return json.dumps(self.metadata)
 
 
 class ParsedTweet(Parsed):
