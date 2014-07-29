@@ -4,3 +4,5 @@ feature_extraction/ark-tweet-nlp-0.3.2/**
 *.gz
 //*.json
 *venv/
+extracted2/
+*.sql

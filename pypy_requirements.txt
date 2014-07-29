@@ -1,5 +1,6 @@
 MySQL-python==1.2.5
 PyYAML==3.10
+SQLAlchemy==0.9.6
 argparse==1.2.1
 cffi==0.8
 greenlet==0.4.0
